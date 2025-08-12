@@ -22,10 +22,6 @@ jobs:
             target: x86_64-apple-darwin
           - os: macos-latest
             target: aarch64-apple-darwin
-          - os: windows-latest
-            target: x86_64-pc-windows-msvc
-          - os: windows-latest
-            target: aarch64-pc-windows-msvc
 
     steps:
       - name: Checkout
@@ -35,13 +31,13 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Add targets
-        run: rustup target add ${{ matrix.target }}
-
-      - name: Install Linux cross compiler
-        if: runner.os == 'Linux' && matrix.target == 'aarch64-unknown-linux-gnu'
         run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu libc6-dev-arm64-cross
+          rustup target add ${{ matrix.target }}
+          if [[ "${{ matrix.target }}" == "aarch64-unknown-linux-gnu" ]]; then
+            sudo apt-get update
+            sudo apt-get install -y gcc-aarch64-linux-gnu
+            sudo apt-get install -y libc6-dev-arm64-cross
+          fi
 
       - name: Build
         run: cargo build --release --target ${{ matrix.target }}
