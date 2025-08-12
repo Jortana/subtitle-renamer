@@ -1,30 +1,40 @@
 use std::path::{Path, PathBuf};
 
-const VIDEO_EXTENSIONS: [&str; 3] = ["mp4", "avi", "mkv"];
-const SUBTITLE_EXTENSIONS: [&str; 3] = ["srt", "vtt", "sub"];
+const VIDEO_EXTENSIONS: [&str; 10] = [
+    "mp4", "mkv", "avi", "mov", "wmv", "flv", "webm", "3gp", "m4v", "hevc",
+];
+const SUBTITLE_EXTENSIONS: [&str; 12] = [
+    "srt", "ass", "ssa", "vtt", "sub", "idx", "dfxp", "ttml", "eia-608", "smi", "cpt", "mks",
+];
 
-/// 判断文件是否为视频文件
+// 判断文件是否为视频文件
 pub fn is_video(file: &Path) -> bool {
     file.extension()
         .and_then(|ext| ext.to_str())
-        .map(|ext| VIDEO_EXTENSIONS.contains(&ext))
+        .map(|ext| {
+            let ext_lower = ext.to_ascii_lowercase();
+            VIDEO_EXTENSIONS.contains(&ext_lower.as_str())
+        })
         .unwrap_or(false)
 }
 
-/// 判断文件是否为字幕文件
+// 判断文件是否为字幕文件
 pub fn is_subtitle(file: &Path) -> bool {
     file.extension()
         .and_then(|ext| ext.to_str())
-        .map(|ext| SUBTITLE_EXTENSIONS.contains(&ext))
+        .map(|ext| {
+            let ext_lower = ext.to_ascii_lowercase();
+            SUBTITLE_EXTENSIONS.contains(&ext_lower.as_str())
+        })
         .unwrap_or(false)
 }
 
-/// 按字母顺序排序文件列表
+// 按字母顺序排序文件列表
 pub fn sort_files(files: &mut Vec<PathBuf>) {
     files.sort_by(|a, b| a.file_name().cmp(&b.file_name()))
 }
 
-/// 匹配视频文件和字幕文件
+// 匹配视频文件和字幕文件
 pub fn match_files(videos: Vec<PathBuf>, subtitles: Vec<PathBuf>) -> Vec<(String, String)> {
     let mut matches = Vec::new();
 
