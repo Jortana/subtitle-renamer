@@ -1,70 +1,80 @@
-# 字幕重命名工具 (Subtitle Renamer)
+# Subtitle Renamer
 
-一个用Rust编写的智能字幕文件重命名工具，支持本地和SSH远程操作模式。
+一个极简的字幕文件重命名工具，只做一件事：把字幕文件重命名为对应的视频文件名。
 
-## 功能特性
+## 功能
 
-- 🎯 **智能匹配**: 自动匹配字幕文件和视频文件
-- 🖥️ **本地模式**: 直接在本地机器上执行重命名操作
-- 🔗 **SSH远程模式**: 通过SSH连接远程执行操作
-- 💻 **交互式界面**: 友好的命令行交互界面
-- 🔍 **模拟模式**: 预览重命名操作而不实际执行
-- 🔐 **安全认证**: 支持密码和SSH密钥认证
+- 扫描指定目录中的视频和字幕文件
+- 按文件名顺序自动匹配
+- 支持模拟模式（不实际重命名）
+- 零依赖，纯Rust标准库
+- 支持命令行参数，便于打包分发
 
 ## 安装
 
 ### 从源码编译
-
 ```bash
 git clone <repository-url>
 cd subtitle_renamer
 cargo build --release
 ```
 
-### 运行
+### 使用可执行文件
+编译完成后，可执行文件位于 `target/release/subtitle_renamer`，可以复制到系统PATH中：
 
 ```bash
-# 将编译好的二进制文件复制到系统PATH
+# macOS/Linux
 sudo cp target/release/subtitle_renamer /usr/local/bin/
+
+# 或者直接使用
+./target/release/subtitle_renamer --help
 ```
 
-## 使用方法
-
-### 1. 本地模式 (默认)
+## 用法
 
 ```bash
-# 扫描当前目录
+# 显示帮助信息
+subtitle_renamer --help
+
+# 显示版本信息
+subtitle_renamer --version
+
+# 重命名当前目录的字幕文件
 subtitle_renamer
 
-# 扫描指定目录
-subtitle_renamer -d /path/to/videos
+# 重命名指定目录的字幕文件
+subtitle_renamer /path/to/videos
 
-# 模拟模式 (预览操作)
-subtitle_renamer -d /path/to/videos -n
+# 模拟模式（只显示会做什么，不实际执行）
+subtitle_renamer --dry-run
+
+# 模拟模式 + 指定目录
+subtitle_renamer /path/to/videos --dry-run
+
+# 使用短参数
+subtitle_renamer -n /path/to/videos
 ```
 
-### 2. SSH远程模式
+## 命令行参数
 
-#### 交互式模式
-```bash
-# 使用SSH密钥连接（推荐）
-subtitle_renamer -s --ssh-user username --ssh-host server.com --ssh-key ~/.ssh/id_rsa
+| 参数 | 短参数 | 描述 | 默认值 |
+|------|--------|------|--------|
+| `--help` | `-h` | 显示帮助信息 | - |
+| `--version` | `-v` | 显示版本信息 | - |
+| `--dry-run` | `-n` | 模拟模式，不实际重命名 | `false` |
+| 目录 | - | 要扫描的目录 | 当前目录 |
 
-# 使用密码连接
-subtitle_renamer -s --ssh-user username --ssh-host server.com --ssh-password your_password
+## 工作原理
 
-# 指定SSH端口
-subtitle_renamer -s --ssh-user username --ssh-host server.com --ssh-port 2222 --ssh-key ~/.ssh/id_rsa
-```
+1. 扫描目录中的视频文件（mp4, mkv, avi等）
+2. 扫描目录中的字幕文件（srt, ass, vtt等）
+3. 按文件名排序
+4. 将字幕文件重命名为对应的视频文件名
 
-#### 非交互式模式
-```bash
-# 直接重命名远程目录
-subtitle_renamer -s --ssh-user username --ssh-host server.com --ssh-key ~/.ssh/id_rsa --remote-dir /path/to/videos
+## 支持的文件格式
 
-# 模拟重命名远程目录
-subtitle_renamer -s --ssh-user username --ssh-host server.com --ssh-key ~/.ssh/id_rsa --remote-dir /path/to/videos -n
-```
+**视频**: mp4, mkv, avi, mov, wmv, flv, webm, 3gp, m4v, hevc
+**字幕**: srt, ass, ssa, vtt, sub, idx, dfxp, ttml, smi, cpt, mks
 
 ## 使用场景
 
@@ -76,139 +86,50 @@ subtitle_renamer -n  # 先预览
 subtitle_renamer     # 执行重命名
 ```
 
-### 场景2: 远程服务器管理
+### 场景2: 跨平台使用
 ```bash
-# 连接到远程服务器并交互式操作
-subtitle_renamer -s --ssh-user admin --ssh-host nas.local --ssh-key ~/.ssh/id_rsa
+# 复制可执行文件到其他机器
+scp subtitle_renamer user@server:/usr/local/bin/
 
-# 直接重命名远程目录
-subtitle_renamer -s --ssh-user admin --ssh-host nas.local --ssh-key ~/.ssh/id_rsa --remote-dir /media/videos
+# 在远程服务器上使用
+ssh user@server "subtitle_renamer /media/videos"
 ```
 
-### 场景3: 批量处理多个服务器
+### 场景3: 脚本集成
 ```bash
-# 处理服务器A
-subtitle_renamer -s --ssh-user user --ssh-host server-a.com --remote-dir /videos/season1
-
-# 处理服务器B
-subtitle_renamer -s --ssh-user user --ssh-host server-b.com --remote-dir /videos/season2
+#!/bin/bash
+# 批量处理多个目录
+for dir in /videos/season1 /videos/season2 /videos/season3; do
+    echo "处理目录: $dir"
+    subtitle_renamer "$dir"
+done
 ```
 
-## 命令行参数
+## 构建
 
-| 参数 | 短参数 | 描述 | 默认值 |
-|------|--------|------|--------|
-| `--dir` | `-d` | 要扫描的目录 | `.` |
-| `--dry-run` | `-n` | 模拟模式，不实际重命名 | `false` |
-| `--ssh` | `-s` | 启用SSH远程模式 | `false` |
-| `--ssh-host` | | SSH服务器地址 | `localhost` |
-| `--ssh-port` | | SSH端口 | `22` |
-| `--ssh-user` | | SSH用户名 | 必需 |
-| `--ssh-password` | | SSH密码 | 可选 |
-| `--ssh-key` | | SSH私钥路径 | 可选 |
-| `--remote-dir` | | 远程目录路径 | 可选 |
-
-## SSH认证方式
-
-### 1. SSH密钥认证（推荐）
 ```bash
-# 生成SSH密钥对（如果还没有）
-ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
-
-# 将公钥复制到远程服务器
-ssh-copy-id username@server.com
-
-# 使用密钥连接
-subtitle_renamer -s --ssh-user username --ssh-host server.com --ssh-key ~/.ssh/id_rsa
-```
-
-### 2. 密码认证
-```bash
-# 使用密码连接（不推荐，因为密码会出现在命令行历史中）
-subtitle_renamer -s --ssh-user username --ssh-host server.com --ssh-password your_password
-```
-
-### 3. SSH Agent认证
-```bash
-# 启动SSH agent并添加密钥
-eval $(ssh-agent -s)
-ssh-add ~/.ssh/id_rsa
-
-# 连接（会自动使用agent中的密钥）
-subtitle_renamer -s --ssh-user username --ssh-host server.com
-```
-
-## 支持的文件格式
-
-### 视频文件
-- `.mp4`, `.avi`, `.mkv`, `.mov`, `.wmv`, `.flv`, `.webm`
-
-### 字幕文件
-- `.srt`, `.ass`, `.ssa`, `.sub`, `.vtt`
-
-## 安全注意事项
-
-1. **SSH密钥安全**: 确保SSH私钥文件权限正确（600）
-2. **密码安全**: 避免在命令行中使用密码，优先使用SSH密钥
-3. **网络安全**: 确保SSH连接使用加密传输
-4. **文件权限**: 确保远程用户有足够的权限访问和修改目标目录
-
-## 故障排除
-
-### 常见问题
-
-1. **SSH连接失败**
-   ```bash
-   # 测试SSH连接
-   ssh username@server.com
-   
-   # 检查SSH密钥权限
-   ls -la ~/.ssh/id_rsa
-   chmod 600 ~/.ssh/id_rsa
-   ```
-
-2. **权限不足**
-   ```bash
-   # 检查远程目录权限
-   ssh username@server.com "ls -la /path/to/videos"
-   ```
-
-3. **文件路径问题**
-   ```bash
-   # 确保使用绝对路径
-   subtitle_renamer -s --ssh-user user --ssh-host server.com --remote-dir /absolute/path/to/videos
-   ```
-
-4. **SSH密钥问题**
-   ```bash
-   # 重新生成SSH密钥
-   ssh-keygen -t rsa -b 4096
-   
-   # 重新复制公钥
-   ssh-copy-id username@server.com
-   ```
-
-## 开发
-
-### 构建开发版本
-```bash
+# 开发版本
 cargo build
-```
 
-### 运行测试
-```bash
+# 发布版本（优化后的可执行文件）
+cargo build --release
+
+# 检查代码
+cargo check
+
+# 运行测试
 cargo test
 ```
 
-### 代码格式化
-```bash
-cargo fmt
-```
+## 哲学
 
-## 许可证
+这个工具遵循Unix哲学：**做一件事，做好它**。
 
-MIT License
+- 没有配置文件
+- 没有SSH远程功能
+- 没有进度条
+- 没有复杂的错误处理
+- 只有核心功能：重命名字幕文件
+- 支持命令行参数，便于分发和使用
 
-## 贡献
-
-欢迎提交Issue和Pull Request！
+如果你需要更多功能，这个工具可能不适合你。如果你只需要重命名字幕文件，这就是你需要的。
